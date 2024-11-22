@@ -4,7 +4,7 @@ digraph {
 	1 [label="Allocate SPY UP EQUITY: 50.0%, TLT US EQUITY: 50.0%" shape=box]
 	0 -> 1 [label=True]
 	2 [label="Volatility(VIXY US EQUITY, 11) > 0.025" shape=diamond]
-	3 [label="Cumulative Return(BND UP EQUITY, 60) > compare_cumulative_returns" shape=diamond]
+	3 [label="Cumulative Return(BND UP EQUITY, 60) > comparison" shape=diamond]
 	4 [label="Allocate TQQQ US EQUITY: 100.0%" shape=box]
 	3 -> 4 [label=True]
 	5 [label="Allocate SPY UP EQUITY: 55.0%, SVXY US EQUITY: 22.5%, TLT US EQUITY: 22.5%" shape=box]

@@ -41,49 +41,17 @@ def allocate_values(default_keys, allocations=None):
     return result
 
 
-# def compare_cumulative_returns(context):
-#     """
-#     Computes the cumulative return of BND UP EQUITY and BIL UP EQUITY and returns BIL UP EQUITY's cumulative return as the threshold.
-
-#     :param context: Dictionary containing ETF histories and other parameters.
-#     :return: Cumulative return of BIL UP EQUITY.
-#     """
-#     cumul_bnd = get_cum_return(context['etf_histories']['BND UP EQUITY'].loc[:context['midnight_dt']], 60)
-#     cumul_bil = get_cum_return(context['etf_histories']['BIL UP EQUITY'].loc[:context['midnight_dt']], 60)
-#     return cumul_bil  # The threshold is BIL UP EQUITY's cumulative return
-
-def create_comparison_function(indicator_name, etf1, etf2, window=60, operator='>'):
+def compare_cumulative_returns(context):
     """
-    Creates a comparison function based on the provided parameters.
+    Computes the cumulative return of BND UP EQUITY and BIL UP EQUITY and returns BIL UP EQUITY's cumulative return as the threshold.
 
-    :param indicator_name: Name of the indicator (e.g., 'cumulative return', 'rsi').
-    :param etf1: The primary ETF to compare.
-    :param etf2: The secondary ETF to use as a threshold.
-    :param window: The window size for indicator calculation.
-    :param operator: The comparison operator as a string ('>', '<', '>=', '<=', '==').
-    :return: A function that takes context and returns the result of the comparison.
+    :param context: Dictionary containing ETF histories and other parameters.
+    :return: Cumulative return of BIL UP EQUITY.
     """
-    def comparison(context):
-        # Retrieve indicator values for both ETFs
-        value1 = get_indicator_value(context, {'name': indicator_name, 'etf': etf1}, window)
-        value2 = get_indicator_value(context, {'name': indicator_name, 'etf': etf2}, window)
-        
-        # Perform the comparison based on the operator
-        if operator == '>':
-            return value1 > value2
-        elif operator == '<':
-            return value1 < value2
-        elif operator == '>=':
-            return value1 >= value2
-        elif operator == '<=':
-            return value1 <= value2
-        elif operator == '==':
-            return value1 == value2
-        else:
-            raise ValueError(f"Unsupported operator: {operator}")
-    
-    return comparison
-    
+    cumul_bnd = get_cum_return(context['etf_histories']['BND UP EQUITY'].loc[:context['midnight_dt']], 60)
+    cumul_bil = get_cum_return(context['etf_histories']['BIL UP EQUITY'].loc[:context['midnight_dt']], 60)
+    return cumul_bil  # The threshold is BIL UP EQUITY's cumulative return
+
 
 def get_indicator_value(context, indicator: dict, window: int) -> float:
     """
