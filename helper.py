@@ -41,17 +41,6 @@ def allocate_values(default_keys, allocations=None):
     return result
 
 
-# def compare_cumulative_returns(context):
-#     """
-#     Computes the cumulative return of BND UP EQUITY and BIL UP EQUITY and returns BIL UP EQUITY's cumulative return as the threshold.
-
-#     :param context: Dictionary containing ETF histories and other parameters.
-#     :return: Cumulative return of BIL UP EQUITY.
-#     """
-#     cumul_bnd = get_cum_return(context['etf_histories']['BND UP EQUITY'].loc[:context['midnight_dt']], 60)
-#     cumul_bil = get_cum_return(context['etf_histories']['BIL UP EQUITY'].loc[:context['midnight_dt']], 60)
-#     return cumul_bil  # The threshold is BIL UP EQUITY's cumulative return
-
 def create_comparison_function(indicator_name, etf1, etf2, window=60, operator='>'):
     """
     Creates a comparison function based on the provided parameters.
