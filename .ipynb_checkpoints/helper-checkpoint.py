@@ -1,3 +1,5 @@
+import logging
+
 def get_rsi(data, window):
     delta = data.diff()
     up = delta.clip(lower=0)
@@ -34,11 +36,12 @@ def allocate_values(default_keys, allocations=None):
     # If allocations are provided, update the dictionary with those values
     if allocations:
         for key, value in allocations.items():
-
             if key in result:
                 result[key] = value
-
+            else:
+                logging.warning(f"Allocation for unknown ETF '{key}' ignored.")
     return result
+
 
 
 def create_comparison_function(indicator_name, etf1, etf2, window=60, operator='>'):
@@ -58,19 +61,25 @@ def create_comparison_function(indicator_name, etf1, etf2, window=60, operator='
         value2 = get_indicator_value(context, {'name': indicator_name, 'etf': etf2}, window)
         
         # Perform the comparison based on the operator
-        if operator == '>':
-            return value1 > value2
-        elif operator == '<':
-            return value1 < value2
-        elif operator == '>=':
-            return value1 >= value2
-        elif operator == '<=':
-            return value1 <= value2
-        elif operator == '==':
-            return value1 == value2
-        else:
-            raise ValueError(f"Unsupported operator: {operator}")
+        try:
+            if operator == '>':
+                return value1 > value2
+            elif operator == '<':
+                return value1 < value2
+            elif operator == '>=':
+                return value1 >= value2
+            elif operator == '<=':
+                return value1 <= value2
+            elif operator == '==':
+                return value1 == value2
+            else:
+                raise ValueError(f"Unsupported operator: {operator}")
+        except Exception as e:
+            logging.error(f"Error during comparison: {e}")
+            return False
     
+    # Assign a name for better logging/debugging
+    comparison.__name__ = f"compare_{etf1}_to_{etf2}_{indicator_name}"
     return comparison
     
 
