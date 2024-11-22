@@ -4,8 +4,8 @@ import os
 import base64
 
 # File paths
-CONDITIONS_FILE = '../conditions.json'  # Adjust path as needed
-ACTIONS_FILE = '../actions.json'        # Adjust path as needed
+CONDITIONS_FILE = '../conditions.json'
+ACTIONS_FILE = '../actions.json'
 
 
 def load_conditions(file_path):
@@ -32,12 +32,69 @@ def save_actions(file_path, data):
         json.dump(data, f, indent=4)
 
 
+def generate_dot(conditions, actions):
+    """
+    Generates DOT code for the decision tree based on conditions and actions.
+
+    Parameters:
+        conditions (list): List of condition dictionaries.
+        actions (dict): Dictionary of actions with allocations.
+
+    Returns:
+        str: DOT language string representing the decision tree.
+    """
+    dot = 'digraph DecisionTree {\n'
+    dot += '    node [shape=rectangle, style=filled, fillcolor="#EFEFEF"];\n\n'
+
+    # Define condition nodes
+    for cond in conditions:
+        node_name = cond['node_name']
+        indicator = cond['indicator']
+        etf = cond['etf']
+        window = cond['window']
+        operator = cond['operator']
+        threshold = cond['threshold']
+
+        # Customize label based on threshold type
+        if isinstance(threshold, (int, float)):
+            threshold_display = f"{threshold}"
+        else:
+            threshold_display = f"Dynamic: {threshold['indicator']} {threshold['etf1']} {threshold['operator']} {threshold['etf2']} ({threshold['window']})"
+
+        label = f"{node_name}\\n{indicator} {operator} {etf} ({window})\\nThreshold: {threshold_display}"
+        dot += f'    "{node_name}" [shape=diamond, fillcolor="#FFD700", style=filled, color="#8B6508", fontcolor=black, label="{label}"];\n'
+
+    # Define action nodes
+    for action_name, allocations in actions.items():
+        allocations_display = "\\n".join([f"{etf}: {alloc}" for etf, alloc in allocations.items()])
+        label = f"{action_name}\\nAllocations:\\n{allocations_display}"
+        dot += f'    "{action_name}" [shape=oval, fillcolor="#ADFF2F", style=filled, color="#556B2F", fontcolor=black, label="{label}"];\n'
+
+    dot += '\n'
+
+    # Define edges based on true_branch and false_branch
+    for cond in conditions:
+        node_name = cond['node_name']
+        true_branch = cond['true_branch']
+        false_branch = cond['false_branch']
+
+        # Edge for true_branch
+        dot += f'    "{node_name}" -> "{true_branch}" [label="True", color="#228B22"];\n'
+
+        # Edge for false_branch
+        dot += f'    "{node_name}" -> "{false_branch}" [label="False", color="#B22222"];\n'
+
+    dot += '}'
+    return dot
+
+
 def main():
     st.title("Trading Strategy Builder")
 
     # Sidebar for navigation
     st.sidebar.header("Options")
-    app_mode = st.sidebar.selectbox("Choose Option", ["Manage Conditions", "Manage Actions", "View Specifications"])
+    app_mode = st.sidebar.selectbox("Choose Option", ["Manage Conditions", "Manage Actions", "View Specifications",
+                                                      "Visualize Decision Tree"])
 
     if app_mode == "Manage Conditions":
         manage_conditions()
@@ -45,6 +102,8 @@ def main():
         manage_actions()
     elif app_mode == "View Specifications":
         view_specs()
+    elif app_mode == "Visualize Decision Tree":
+        visualize_decision_tree()
 
 
 def manage_conditions():
@@ -84,7 +143,8 @@ def manage_conditions():
                 dyn_indicator = st.selectbox("Dynamic Indicator", ["RSI", "Volatility", "Cumulative Return"])
                 dyn_etf1 = st.text_input("Dynamic ETF 1 (e.g., BND UP EQUITY)", help="First ETF for comparison.")
                 dyn_etf2 = st.text_input("Dynamic ETF 2 (e.g., BIL UP EQUITY)", help="Second ETF for comparison.")
-                dyn_window = st.number_input("Dynamic Window Size", min_value=1, step=1, help="Time window for the dynamic comparison.")
+                dyn_window = st.number_input("Dynamic Window Size", min_value=1, step=1,
+                                             help="Time window for the dynamic comparison.")
                 dyn_operator = st.selectbox("Dynamic Operator", [">", "<", ">=", "<=", "=="])
                 threshold = {
                     "indicator": dyn_indicator,
@@ -132,11 +192,12 @@ def manage_conditions():
                 with st.form("edit_condition"):
                     node_name = st.text_input("Node Name", value=condition['node_name'], disabled=True)
                     indicator = st.selectbox("Indicator", ["RSI", "Volatility", "Cumulative Return"],
-                                            index=["RSI", "Volatility", "Cumulative Return"].index(condition['indicator']))
+                                             index=["RSI", "Volatility", "Cumulative Return"].index(
+                                                 condition['indicator']))
                     etf = st.text_input("ETF Name (e.g., QQQ UP EQUITY)", value=condition['etf'])
                     window = st.number_input("Window Size", min_value=1, step=1, value=condition['window'])
                     operator = st.selectbox("Operator", [">", "<", ">=", "<=", "=="],
-                                           index=[">", "<", ">=", "<=", "=="].index(condition['operator']))
+                                            index=[">", "<", ">=", "<=", "=="].index(condition['operator']))
 
                     if isinstance(condition['threshold'], (int, float)):
                         threshold_type = "Static Value"
@@ -144,26 +205,31 @@ def manage_conditions():
                         threshold_type = "Dynamic Comparison"
 
                     threshold_type = st.selectbox("Threshold Type", ["Static Value", "Dynamic Comparison"],
-                                                 index=["Static Value", "Dynamic Comparison"].index(threshold_type))
+                                                  index=["Static Value", "Dynamic Comparison"].index(threshold_type))
 
                     if threshold_type == "Static Value":
                         threshold = st.number_input(
                             "Threshold Value",
                             step=0.01,
-                            value=float(condition['threshold']) if isinstance(condition['threshold'], (int, float)) else 0.0,
+                            value=float(condition['threshold']) if isinstance(condition['threshold'],
+                                                                              (int, float)) else 0.0,
                             format="%.2f",
                             help="Numeric threshold value."
                         )
                     else:
                         st.info("Define dynamic threshold based on another comparison.")
                         dyn_indicator = st.selectbox("Dynamic Indicator", ["RSI", "Volatility", "Cumulative Return"],
-                                                    index=["RSI", "Volatility", "Cumulative Return"].index(condition['threshold']['indicator']))
-                        dyn_etf1 = st.text_input("Dynamic ETF 1 (e.g., BND UP EQUITY)", value=condition['threshold'].get('etf1', ''))
-                        dyn_etf2 = st.text_input("Dynamic ETF 2 (e.g., BIL UP EQUITY)", value=condition['threshold'].get('etf2', ''))
+                                                     index=["RSI", "Volatility", "Cumulative Return"].index(
+                                                         condition['threshold']['indicator']))
+                        dyn_etf1 = st.text_input("Dynamic ETF 1 (e.g., BND UP EQUITY)",
+                                                 value=condition['threshold'].get('etf1', ''))
+                        dyn_etf2 = st.text_input("Dynamic ETF 2 (e.g., BIL UP EQUITY)",
+                                                 value=condition['threshold'].get('etf2', ''))
                         dyn_window = st.number_input("Dynamic Window Size", min_value=1, step=1,
-                                                    value=condition['threshold'].get('window', 1))
+                                                     value=condition['threshold'].get('window', 1))
                         dyn_operator = st.selectbox("Dynamic Operator", [">", "<", ">=", "<=", "=="],
-                                                    index=[">", "<", ">=", "<=", "=="].index(condition['threshold'].get('operator', '>')))
+                                                    index=[">", "<", ">=", "<=", "=="].index(
+                                                        condition['threshold'].get('operator', '>')))
                         threshold = {
                             "indicator": dyn_indicator,
                             "etf1": dyn_etf1,
@@ -173,9 +239,11 @@ def manage_conditions():
                         }
 
                     true_branch = st.selectbox("True Branch (Action/Condition Node Name)", options=all_node_names,
-                                               index=all_node_names.index(condition['true_branch']) if condition['true_branch'] in all_node_names else 0)
+                                               index=all_node_names.index(condition['true_branch']) if condition[
+                                                                                                           'true_branch'] in all_node_names else 0)
                     false_branch = st.selectbox("False Branch (Action/Condition Node Name)", options=all_node_names,
-                                                index=all_node_names.index(condition['false_branch']) if condition['false_branch'] in all_node_names else 0)
+                                                index=all_node_names.index(condition['false_branch']) if condition[
+                                                                                                             'false_branch'] in all_node_names else 0)
 
                     submitted = st.form_submit_button("Save Changes")
                     if submitted:
@@ -317,6 +385,24 @@ def view_specs():
 
     if st.button("Download Actions JSON"):
         st.markdown(download_json(actions, 'actions.json'), unsafe_allow_html=True)
+
+
+def visualize_decision_tree():
+    st.header("Decision Tree Visualization")
+
+    # Load conditions and actions
+    conditions = load_conditions(CONDITIONS_FILE)
+    actions = load_actions(ACTIONS_FILE)
+
+    if not conditions and not actions:
+        st.info("No conditions or actions defined to visualize.")
+        return
+
+    # Generate DOT code
+    dot = generate_dot(conditions, actions)
+
+    # Display the graph
+    st.graphviz_chart(dot)
 
 
 if __name__ == "__main__":
