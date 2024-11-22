@@ -24,6 +24,11 @@ def build_decision_tree_from_specs(condition_specs, action_specs):
     }
 
     """
+    # Validate specifications first
+    if not validate_specs(condition_specs, action_specs):
+        logging.error("Specification validation failed. Aborting decision tree construction.")
+        return None
+        
     nodes = {}
 
     # Create ActionNodes
@@ -122,6 +127,28 @@ def build_decision_tree():
     # Initialize the decision tree
     decision_tree = DecisionTree(root_node)
     return decision_tree
+
+
+def validate_specs(condition_specs, action_specs):
+    valid = True
+    action_names = set(action_specs.keys())
+    node_names = set(spec['node_name'] for spec in condition_specs)
+    
+    for spec in condition_specs:
+        # Check required fields
+        required_fields = ['node_name', 'indicator', 'etf', 'window', 'operator', 'threshold', 'true_branch', 'false_branch']
+        for field in required_fields:
+            if field not in spec:
+                logging.error(f"Missing field '{field}' in condition specification: {spec}")
+                valid = False
+        
+        # Check if branches reference existing nodes or actions
+        for branch in ['true_branch', 'false_branch']:
+            if spec[branch] not in node_names and spec[branch] not in action_names:
+                logging.error(f"Branch '{branch}' in node '{spec['node_name']}' references unknown node/action '{spec[branch]}'")
+                valid = False
+    
+    return valid
 
 
 def condition1(context):

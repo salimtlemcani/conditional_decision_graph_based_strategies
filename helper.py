@@ -95,11 +95,16 @@ def get_indicator_value(context, indicator: dict, window: int) -> float:
     etf = indicator['etf']
     name = indicator['name']
 
-    if name.lower() == 'rsi':
-        return get_rsi(context['etf_histories'][etf], window).loc[context['midnight_dt']]
-    elif name.lower() == 'volatility':
-        return get_vol(context['etf_histories'][etf], window).loc[context['midnight_dt']]
-    elif name.lower() == 'cumulative return':
-        return get_cum_return(context['etf_histories'][etf].loc[:context['midnight_dt']], window)
-    else:
-        raise ValueError(f"Unsupported indicator: {name}")
+    try:
+        if name.lower() == 'rsi':
+            return get_rsi(context['etf_histories'][etf], window).loc[context['midnight_dt']]
+        elif name.lower() == 'volatility':
+            return get_vol(context['etf_histories'][etf], window).loc[context['midnight_dt']]
+        elif name.lower() == 'cumulative return':
+            return get_cum_return(context['etf_histories'][etf].loc[:context['midnight_dt']], window)
+        else:
+            raise ValueError(f"Unsupported indicator: {name}")
+    except KeyError:
+        logging.error(f"Indicator data for {etf} at {context['midnight_dt']} not found.")
+        return 0  # Or handle as per your strategy requirements
+
