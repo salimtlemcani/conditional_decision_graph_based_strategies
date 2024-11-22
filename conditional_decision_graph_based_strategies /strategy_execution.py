@@ -1,8 +1,10 @@
+import os
 from strategy_builder import build_decision_tree_from_specs
 from helper import allocate_values
-
-import pandas as pd
 import logging
+import pandas as pd
+import json
+
 
 def basket_creation_method(strategy, dt, positions, **additional_parameters):
     size_date = pd.Timestamp(strategy.size_date_from_decision_dt(dt))
@@ -26,13 +28,28 @@ def basket_creation_method(strategy, dt, positions, **additional_parameters):
         'etfs': additional_parameters.get('etfs', {}),
     }
 
-    # Retrieve condition and action specifications from additional_parameters
-    condition_specs = additional_parameters.get('condition_specs', [])
-    action_specs = additional_parameters.get('action_specs', {})
+    # Retrieve condition and action specifications from JSON files
+    conditions_file = additional_parameters.get('conditions_file', '../conditions.json')
+    actions_file = additional_parameters.get('actions_file', '../actions.json')
+
+    with open(conditions_file, 'r') as f:
+        condition_specs = json.load(f)
+
+    with open(actions_file, 'r') as f:
+        action_specs = json.load(f)
+
+    # Validate specifications
+    from strategy_builder import validate_specs
+    if not validate_specs(condition_specs, action_specs):
+        logging.error("Invalid condition or action specifications. Aborting order generation.")
+        return {}
 
     # Build and evaluate the decision tree
     try:
         decision_tree = build_decision_tree_from_specs(condition_specs, action_specs)
+        if decision_tree is None:
+            logging.error("Decision tree could not be built.")
+            return {}
         order = decision_tree.evaluate(context)
         logging.info(f"Decision Tree Evaluation Result: {order}")
     except Exception as e:
@@ -41,9 +58,6 @@ def basket_creation_method(strategy, dt, positions, **additional_parameters):
 
     # Convert allocations to orders
     try:
-        # Assuming `etfs` is a dict mapping complete names to ETF objects
-
-        orders = allocate_values(list(context['etfs'].keys()), allocations=order)
         orders = {context['etfs'][symbol]: weight for symbol, weight in allocate_values(context['etfs'], order).items()}
         logging.info(f"Generated Orders: {orders}")
         return orders
