@@ -1,20 +1,20 @@
 {
-    "action_node1": {
+    "SPY/TLT 50/50": {
         "SPY UP EQUITY": 0.5,
         "TLT US EQUITY": 0.5
     },
-    "action_node2a": {
+    "TQQQ 100": {
         "TQQQ US EQUITY": 1.0
     },
-    "action_node2b": {
-        "SPY UP EQUITY": 0.55,
-        "SVXY US EQUITY": 0.225,
-        "TLT US EQUITY": 0.225
+    "SPY/SVXY/TLT 0.56/0.22/0.22": {
+        "SPY UP EQUITY": 0.56,
+        "SVXY US EQUITY": 0.22,
+        "TLT US EQUITY": 0.22
     },
-    "action_node3": {
+    "TQQQ 100 (2)": {
         "TQQQ US EQUITY": 1.0
     },
-    "action_node4": {
+    "BIL/SPY/TLT/GLD 0.25/0.25/0.25/0.25": {
         "BIL UP EQUITY": 0.25,
         "SPY UP EQUITY": 0.25,
         "TLT US EQUITY": 0.25,

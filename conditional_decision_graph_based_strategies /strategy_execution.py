@@ -29,8 +29,8 @@ def basket_creation_method(strategy, dt, positions, **additional_parameters):
     }
 
     # Retrieve condition and action specifications from JSON files
-    conditions_file = additional_parameters.get('conditions_file', '../conditions.json')
-    actions_file = additional_parameters.get('actions_file', '../actions.json')
+    conditions_file = additional_parameters.get('conditions_file', 'conditions.json')
+    actions_file = additional_parameters.get('actions_file', 'actions.json')
 
     with open(conditions_file, 'r') as f:
         condition_specs = json.load(f)
