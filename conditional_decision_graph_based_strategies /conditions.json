@@ -6,7 +6,7 @@
         "window": 20,
         "operator": ">",
         "threshold": 70,
-        "true_branch": "action_node1",
+        "true_branch": "SPY/TLT 50/50",
         "false_branch": "decision_node_volatility"
     },
     {
@@ -32,8 +32,8 @@
             "window": 60,
             "operator": ">"
         },
-        "true_branch": "action_node2a",
-        "false_branch": "action_node2b"
+        "true_branch": "TQQQ 100",
+        "false_branch": "SPY/SVXY/TLT 0.56/0.22/0.22"
     },
     {
         "node_name": "decision_node_rsi_lower",
@@ -42,7 +42,7 @@
         "window": 31,
         "operator": "<",
         "threshold": 10,
-        "true_branch": "action_node3",
-        "false_branch": "action_node4"
+        "true_branch": "TQQQ 100 (2)",
+        "false_branch": "BIL/SPY/TLT/GLD 0.25/0.25/0.25/0.25"
     }
 ]
