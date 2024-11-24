@@ -21,7 +21,6 @@ others).
   - [My Strategies](#my-strategies)
 - [Project Structure](#project-structure)
 - [Customization](#customization)
-- [License](#license)
 
 ## Features
 
