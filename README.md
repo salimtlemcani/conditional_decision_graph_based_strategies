@@ -4,14 +4,15 @@ Welcome to the **Trading Strategy Builder**, a Streamlit-based application that 
 run custom trading strategies using a decision tree approach. This tool integrates with the SigTech platform to execute 
 strategies and analyze their performance.
 
-It specialises in path-dependant strategies (`sig.DynamicStrategy`) based on conditions set by indicators (such as RSI, cumulative returns and 
-others).
+It specializes in path-dependent strategies (`sig.DynamicStrategy`) based on conditions set by indicators (such as RSI,
+cumulative returns, and others).
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
-- [Prerequisites](#prerequisites)
+  - [Prerequisites](#prerequisites)
+  - [Steps](#steps)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
   - [Manage Conditions](#manage-conditions)
@@ -76,8 +77,7 @@ others).
 5. **Set Up SigTech Environment**
 
    - Ensure you have access to the SigTech platform.
-
-[//]: # (   - Configure your API keys and environment variables as per SigTech's documentation.)
+   - Configure your SigTech credentials as per their documentation.
 
 ## Getting Started
 
@@ -119,7 +119,8 @@ The application is divided into several sections accessible from the sidebar:
 
 ### Visualize Decision Tree
 
-- **Decision Tree Visualization**: Generate and view the decision tree based on your conditions and actions using Graphviz.
+- **Decision Tree Visualization**: Generate and view the decision tree based on your conditions and actions using 
+Graphviz.
 
 ### My Strategies
 
@@ -131,9 +132,20 @@ The application is divided into several sections accessible from the sidebar:
 ```
 conditional_decision_graph_based_strategies/
 ├── app.py                   # Main Streamlit application
+├── modules/                 # Application modules (formerly 'pages')
+│   ├── manage_conditions.py
+│   ├── manage_actions.py
+│   ├── view_specs.py
+│   ├── visualize_decision_tree.py
+│   └── my_strategies.py
+├── utils/                   # Utility modules
+│   ├── __init__.py
+│   ├── data_utils.py
+│   ├── decision_tree_utils.py
+│   ├── helper.py            # Utility functions for indicators and comparisons
+│   └── plotting_utils.py
 ├── strategy_builder.py      # Builds the decision tree from specifications
 ├── strategy_execution.py    # Contains the basket creation method
-├── helper.py                # Utility functions for indicators and comparisons
 ├── conditions.json          # JSON file storing condition specifications
 ├── actions.json             # JSON file storing action specifications
 ├── strategies/              # Directory to store saved strategy objects
@@ -143,9 +155,10 @@ conditional_decision_graph_based_strategies/
 
 ## Customization
 
-- **Indicators**: Extend `helper.py` to include additional financial indicators as needed.
-- **ETFs**: Modify the list of ETFs in `app.py` to include those relevant to your strategies.
-- **Visualization**: Customize the plotting functions in `app.py` to adjust the appearance of performance graphs.
+- **Indicators**: Extend `utils/helper.py` to include additional financial indicators as needed.
+- **ETFs**: Modify the list of ETFs in `app.py` or in the modules to include those relevant to your strategies.
+- **Visualization**: Customize the plotting functions in `utils/plotting_utils.py` to adjust the appearance of 
+performance graphs.
 
 ---
 
