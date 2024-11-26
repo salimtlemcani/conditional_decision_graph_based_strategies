@@ -1,0 +1,23 @@
+{
+    "SPY/TLT 50/50": {
+        "SPY UP EQUITY": 0.5,
+        "TLT US EQUITY": 0.5
+    },
+    "TQQQ 100": {
+        "TQQQ US EQUITY": 1.0
+    },
+    "SPY/SVXY/TLT 0.56/0.22/0.22": {
+        "SPY UP EQUITY": 0.56,
+        "SVXY US EQUITY": 0.22,
+        "TLT US EQUITY": 0.22
+    },
+    "TQQQ 100 (2)": {
+        "TQQQ US EQUITY": 1.0
+    },
+    "BIL/SPY/TLT/GLD 0.25/0.25/0.25/0.25": {
+        "BIL UP EQUITY": 0.25,
+        "SPY UP EQUITY": 0.25,
+        "TLT US EQUITY": 0.25,
+        "GLD UP EQUITY": 0.25
+    }
+}

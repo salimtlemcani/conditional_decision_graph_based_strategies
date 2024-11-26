@@ -4,7 +4,7 @@ from utils.data_utils import load_actions, save_actions
 
 def manage_actions():
     # File paths
-    ACTIONS_FILE = 'actions.json'
+    ACTIONS_FILE = 'test_strategies/actions.json'
 
     st.header("Manage Actions")
     actions = load_actions(ACTIONS_FILE)

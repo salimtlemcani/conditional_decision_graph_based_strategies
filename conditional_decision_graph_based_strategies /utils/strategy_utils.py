@@ -1,19 +1,27 @@
 
 import os
 import pickle
-import sigtech.framework as sig
 
 STRATEGY_DIR = 'strategies'
+
 
 def save_strategy(strategy_object, strategy_name):
     strategy_file = os.path.join(STRATEGY_DIR, f"{strategy_name}.pkl")
     with open(strategy_file, 'wb') as f:
         pickle.dump(strategy_object, f)
 
+
 def load_strategy(strategy_name):
-    strategy_file = os.path.join(STRATEGY_DIR, f"{strategy_name}.pkl")
+    strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+    if not os.path.exists(strategy_folder):
+        return None  # Folder does not exist
+    strategy_file = os.path.join(strategy_folder, 'strategy.pkl')
+    if not os.path.exists(strategy_file):
+        return None  # File does not exist
     with open(strategy_file, 'rb') as f:
-        return pickle.load(f)
+        strategy_object = pickle.load(f)
+    return strategy_object
+
 
 def list_saved_strategies():
     if not os.path.exists(STRATEGY_DIR):
@@ -21,8 +29,3 @@ def list_saved_strategies():
     strategy_files = [f for f in os.listdir(STRATEGY_DIR) if f.endswith('.pkl')]
     strategy_names = [os.path.splitext(f)[0] for f in strategy_files]
     return strategy_names
-
-def run_strategy(strategy_name, start_date, end_date, initial_cash, conditions_file, actions_file):
-    # ... (logic from your run_new_strategy function)
-    # Return the strategy_object
-    return strategy_object

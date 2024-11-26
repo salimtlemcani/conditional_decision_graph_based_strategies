@@ -3,11 +3,14 @@ import streamlit as st
 from utils.data_utils import load_conditions, save_conditions, load_actions
 from utils.decision_tree_utils import generate_dot
 
+# Directory to store strategy objects
+STRATEGY_DIR = 'strategies'
+
 
 def manage_conditions():
     # File paths
-    CONDITIONS_FILE = 'conditions.json'
-    ACTIONS_FILE = 'actions.json'
+    CONDITIONS_FILE = 'test_strategies/conditions.json'
+    ACTIONS_FILE = 'test_strategies/actions.json'
 
     st.header("Manage Conditions")
     conditions = load_conditions(CONDITIONS_FILE)

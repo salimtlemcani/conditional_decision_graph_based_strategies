@@ -7,14 +7,15 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 import sigtech.framework as sig
+
+from strategy_builder import validate_specs, build_decision_tree_from_specs
+from strategy_execution import run_strategy
+
 from utils.data_utils import load_conditions, load_actions
+from utils.decision_tree_utils import generate_dot
 from utils.plotting_utils import plot_performance
-from utils.strategy_utils import run_strategy, list_saved_strategies, load_strategy
+from utils.strategy_utils import list_saved_strategies, load_strategy
 
-
-# File paths
-CONDITIONS_FILE = 'conditions.json'
-ACTIONS_FILE = 'actions.json'
 
 # Directory to store strategy objects
 STRATEGY_DIR = 'strategies'
@@ -43,16 +44,23 @@ def run_new_strategy():
         initial_cash = st.number_input("Initial Cash", min_value=1000, step=100, value=100000)
 
         submitted = st.form_submit_button("Run Strategy")
-
+        print('DEBUG [run_new_strategy]', {
+            "Strategy Name": strategy_name,
+            "Start Date": start_date,
+            "End Date": end_date,
+            "Initial Cash": initial_cash,
+            "Submitted": submitted
+        })
     if submitted:
         if not strategy_name:
             st.error("Strategy name cannot be empty.")
             return
 
         # Check if strategy with the same name exists
-        strategy_file = os.path.join(STRATEGY_DIR, f"{strategy_name}.pkl")
-        if os.path.exists(strategy_file):
-            st.error("Strategy name already exists. Please choose a different name.")
+        strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+        print(f'DEBUG [run_new_strategy] strategy_folder: {strategy_folder}')
+        if not os.path.exists(strategy_folder):
+            st.error("Strategy name does not exists. Please make sure to add your strategy before running it.")
             return
 
         with st.spinner("Running strategy..."):
@@ -60,69 +68,39 @@ def run_new_strategy():
                 # Initialize SigTech environment
                 sig.init()
 
+                # File paths
+                conditions_file = os.path.join(strategy_folder, 'conditions.json')
+                actions_file = os.path.join(strategy_folder, 'actions.json')
+                print(f'DEBUG [run_new_strategy] actions_file: {actions_file}')
+                print(f'DEBUG [run_new_strategy] conditions_file: {conditions_file}')
+
                 # Load conditions and actions
-                conditions = load_conditions(CONDITIONS_FILE)
-                actions = load_actions(ACTIONS_FILE)
+                conditions = load_conditions(conditions_file)
+                actions = load_actions(actions_file)
+                print(f'DEBUG [run_new_strategy] conditions: {conditions}')
+                print(f'DEBUG [run_new_strategy] actions: {actions}')
 
                 # Validate specifications
-                from strategy_builder import validate_specs
                 if not validate_specs(conditions, actions):
                     st.error("Invalid condition or action specifications. Strategy build aborted.")
                     return
 
                 # Build the decision tree
-                from strategy_builder import build_decision_tree_from_specs
-
                 decision_tree = build_decision_tree_from_specs(conditions, actions)
                 if decision_tree is None:
                     st.error("Failed to build the decision tree.")
                     return
+                print(f'DEBUG [run_new_strategy] decision_tree: {decision_tree}')
 
-                # Define ETFs
-                etf_names = [
-                    'TLT US EQUITY',
-                    'TQQQ US EQUITY',
-                    'SVXY US EQUITY',
-                    'VIXY US EQUITY',
-                    'QQQ UP EQUITY',
-                    'SPY UP EQUITY',
-                    'BND UP EQUITY',
-                    'BIL UP EQUITY',
-                    'GLD UP EQUITY',
-                ]
-                etfs = {name: sig.obj.get(name) for name in etf_names}
+                try:
+                    sig_strategy_object = run_strategy(start_date, end_date, initial_cash, conditions_file, actions_file)
+                except Exception as e:
+                    st.error(e)
 
-                # Retrieve ETF histories
-                etf_histories = {name: etfs[name].history() for name in etf_names}
-
-                # Prepare additional parameters
-                additional_parameters = {
-                    'example_dates': etf_histories[next(iter(etf_histories))].index.tolist(),
-                    'etf_histories': etf_histories,
-                    'etfs': etfs,
-                    'conditions_file': CONDITIONS_FILE,
-                    'actions_file': ACTIONS_FILE,
-                }
-
-                # Import basket_creation_method
-                from strategy_execution import basket_creation_method
-
-                # Initialize the Dynamic Strategy
-                strat = sig.DynamicStrategy(
-                    currency='USD',
-                    start_date=start_date,
-                    end_date=end_date,
-                    trade_frequency='1BD',
-                    basket_creation_method=basket_creation_method,
-                    basket_creation_kwargs=additional_parameters,
-                    initial_cash=initial_cash,
-                )
-
-                # Build the strategy
-                strat.build(progress=True)
-
+                print('*' * 50)
+                print(f'DEBUG [run_new_strategy] new sig strategy object : {sig_strategy_object}')
                 # Get performance data
-                performance = strat.history()
+                performance = sig_strategy_object.history()
                 # Reset the Series name to a simple string
                 performance.name = f'{strategy_name} NAV'
                 # Convert to DataFrame
@@ -135,12 +113,19 @@ def run_new_strategy():
                     'end_date': end_date,
                     'initial_cash': initial_cash,
                     'performance': performance,
+                    'conditions': conditions,
+                    'actions': actions,
                 }
-
-                # Save the strategy object
+                print('*' * 50)
+                print(f'DEBUG [run_new_strategy] new strategy object : {strategy_object}')
+                # Save the strategy object in the strategy folder
+                print(f'DEBUG [run_new_strategy] Updating strategy {strategy_name}')
+                strategy_file = os.path.join(strategy_folder, 'strategy.pkl')
                 with open(strategy_file, 'wb') as f:
                     pickle.dump(strategy_object, f)
-
+                print(f'DEBUG [run_new_strategy] strategy saved to {strategy_file}')
+                print('*'*50)
+                print(f'DEBUG [run_new_strategy] new strategy object : {strategy_object}')
                 st.success(f"Strategy '{strategy_name}' has been saved.")
 
             except Exception as e:
@@ -148,29 +133,62 @@ def run_new_strategy():
 
 
 def view_saved_strategies():
-
     st.subheader("Saved Strategies")
 
-    # List all saved strategy files
-    strategy_files = [f for f in os.listdir(STRATEGY_DIR) if f.endswith('.pkl')]
-    strategy_names = [os.path.splitext(f)[0] for f in strategy_files]
+    # List all strategy folders
+    strategy_names = [name for name in os.listdir(STRATEGY_DIR)
+                      if os.path.isdir(os.path.join(STRATEGY_DIR, name))]
+    print(f'DEBUG [view_saved_strategies] strategy_names: {strategy_names}')
 
     if not strategy_names:
         st.info("No strategies have been saved yet.")
         return
 
     selected_strategy_name = st.selectbox("Select a Strategy", strategy_names)
-
+    print(f'DEBUG [view_saved_strategies] selected_strategy_name: {selected_strategy_name}')
     if selected_strategy_name:
+        # Define the strategy folder path
+        strategy_folder = os.path.join(STRATEGY_DIR, selected_strategy_name)
+
         # Load the strategy object
-        strategy_file = os.path.join(STRATEGY_DIR, f"{selected_strategy_name}.pkl")
-        with open(strategy_file, 'rb') as f:
-            strategy_object = pickle.load(f)
+        strategy_object = load_strategy(selected_strategy_name)
+        print(f'DEBUG [view_saved_strategies] strategy_object: {strategy_object}')
+        if strategy_object is None:
+            st.error("Failed to load the strategy. Please ensure to add and run the strategy first.")
+            return
 
         st.write(f"**Strategy Name:** {strategy_object['name']}")
         st.write(f"**Start Date:** {strategy_object['start_date']}")
         st.write(f"**End Date:** {strategy_object['end_date']}")
         st.write(f"**Initial Cash:** {strategy_object['initial_cash']}")
+
+        # Load Conditions
+        conditions_file = os.path.join(strategy_folder, 'conditions.json')
+        if os.path.exists(conditions_file):
+            conditions = load_conditions(conditions_file)
+            st.subheader("Conditions")
+            for condition in conditions:
+                st.markdown(f"**{condition['node_name']}**")
+                st.json(condition)
+        else:
+            st.info("No conditions found for this strategy.")
+
+        # Load Actions
+        actions_file = os.path.join(strategy_folder, 'actions.json')
+        if os.path.exists(actions_file):
+            actions = load_actions(actions_file)
+            st.subheader("Actions")
+            for action_name, alloc in actions.items():
+                st.markdown(f"**{action_name}**")
+                st.json(alloc)
+        else:
+            st.info("No actions found for this strategy.")
+
+        # Visualize Decision Tree
+        if conditions and actions:
+            st.subheader("Decision Tree Visualization")
+            dot = generate_dot(conditions, actions)
+            st.graphviz_chart(dot)
 
         # Plot the performance
         performance = strategy_object['performance']
@@ -203,9 +221,6 @@ def view_saved_strategies():
 
         # Enable grid
         ax.grid(True)
-
-        # # Show legend
-        # ax.legend()
 
         # Tight layout to prevent clipping
         plt.tight_layout()
