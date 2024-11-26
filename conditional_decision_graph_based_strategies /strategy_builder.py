@@ -1,9 +1,14 @@
+from typing import List, Dict, Any, Optional
+import logging
+
 from graph_factory import ActionNode, DecisionNode, DecisionTree
 from helper import get_cum_return, get_rsi, get_vol, allocate_values, create_comparison_function, get_indicator_value
 
-import logging
 
-def build_decision_tree_from_specs(condition_specs, action_specs):
+def build_decision_tree_from_specs(
+        condition_specs: List[Dict[str, Any]],
+        action_specs:Dict[str, Any]
+) -> Optional[DecisionTree]:
     """
     Builds a decision tree based on condition and action specifications.
     
@@ -70,7 +75,46 @@ def build_decision_tree_from_specs(condition_specs, action_specs):
     return decision_tree
 
 
+def validate_specs(
+        condition_specs: List[Dict[str, Any]],
+        action_specs: Dict[str, Any]
+) -> bool:
+    """
+    Validates condition and action specifications for constructing a decision tree.
+
+    Ensures all required fields are present in condition specifications and verifies
+    that branches reference existing nodes or actions.
+
+    :param condition_specs: List of dictionaries defining condition nodes.
+    :param action_specs: Dictionary mapping action names to allocation details.
+    :return: True if specifications are valid, otherwise False.
+    """
+
+    valid = True
+    action_names = set(action_specs.keys())
+    node_names = set(spec['node_name'] for spec in condition_specs)
+
+    for spec in condition_specs:
+        # Check required fields
+        required_fields = ['node_name', 'indicator', 'etf', 'window', 'operator', 'threshold', 'true_branch', 'false_branch']
+        for field in required_fields:
+            if field not in spec:
+                logging.error(f"Missing field '{field}' in condition specification: {spec}")
+                valid = False
+
+        # Check if branches reference existing nodes or actions
+        for branch in ['true_branch', 'false_branch']:
+            if spec[branch] not in node_names and spec[branch] not in action_names:
+                logging.error(f"Branch '{branch}' in node '{spec['node_name']}' references unknown node/action '{spec[branch]}'")
+                valid = False
+    return valid
+
+
+#  ---- the below functions are not used anymore. Will be removed in future versions
 def build_decision_tree():
+    """
+    Not used anymore - was used to build a decision tree with pre-coded conditions and actions.
+    """
     # Leaf nodes (actions)
     action_node1 = ActionNode(allocations={'SPY UP EQUITY': 0.5, 'TLT US EQUITY': 0.5})
     action_node2a = ActionNode(allocations={'TQQQ US EQUITY': 1.0})
@@ -129,28 +173,6 @@ def build_decision_tree():
     return decision_tree
 
 
-def validate_specs(condition_specs, action_specs):
-    valid = True
-    action_names = set(action_specs.keys())
-    node_names = set(spec['node_name'] for spec in condition_specs)
-    
-    for spec in condition_specs:
-        # Check required fields
-        required_fields = ['node_name', 'indicator', 'etf', 'window', 'operator', 'threshold', 'true_branch', 'false_branch']
-        for field in required_fields:
-            if field not in spec:
-                logging.error(f"Missing field '{field}' in condition specification: {spec}")
-                valid = False
-        
-        # Check if branches reference existing nodes or actions
-        for branch in ['true_branch', 'false_branch']:
-            if spec[branch] not in node_names and spec[branch] not in action_names:
-                logging.error(f"Branch '{branch}' in node '{spec['node_name']}' references unknown node/action '{spec[branch]}'")
-                valid = False
-    
-    return valid
-
-
 def condition1(context):
     rsi_series = get_rsi(context['etf_histories']['QQQ UP EQUITY'], 20)
     midnight_dt = context['midnight_dt']
@@ -158,6 +180,7 @@ def condition1(context):
         return False
     rsi_value = rsi_series.loc[midnight_dt]
     return rsi_value > 70
+
 
 def condition2(context):
     vol_series = get_vol(context['etf_histories']['VIXY US EQUITY'], 11)
@@ -167,10 +190,12 @@ def condition2(context):
     vol_value = vol_series.loc[midnight_dt]
     return vol_value > 0.025
 
+
 def condition2a(context):
     cumul_bnd = get_cum_return(context['etf_histories']['BND UP EQUITY'].loc[:context['midnight_dt']], 60)
     cumul_bil = get_cum_return(context['etf_histories']['BIL UP EQUITY'].loc[:context['midnight_dt']], 60)
     return cumul_bnd > cumul_bil
+
 
 def condition3(context):
     rsi_series = get_rsi(context['etf_histories']['QQQ UP EQUITY'], 31)
