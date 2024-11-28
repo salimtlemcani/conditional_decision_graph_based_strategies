@@ -1,17 +1,24 @@
 
 import streamlit as st
+import os
+
 from utils.data_utils import load_conditions, save_conditions, load_actions
 from utils.decision_tree_utils import generate_dot
 
+# Directory to store strategy objects
+STRATEGY_DIR = 'strategies'
 
-def manage_conditions():
-    # File paths
-    CONDITIONS_FILE = 'conditions.json'
-    ACTIONS_FILE = 'actions.json'
+
+def manage_conditions(strategy_name):
+    strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+    conditions_file = os.path.join(strategy_folder, 'conditions.json')
+    actions_file = os.path.join(strategy_folder, 'actions.json')
+
+    conditions = load_conditions(conditions_file)
+    actions = load_actions(actions_file)
+
 
     st.header("Manage Conditions")
-    conditions = load_conditions(CONDITIONS_FILE)
-    actions = load_actions(ACTIONS_FILE)  # Load actions to get branch names
 
     # Combine condition and action node names for branch selection
     condition_names = [cond['node_name'] for cond in conditions]
@@ -77,7 +84,7 @@ def manage_conditions():
                         "false_branch": false_branch
                     }
                     conditions.append(new_condition)
-                    save_conditions(CONDITIONS_FILE, conditions)
+                    save_conditions(conditions_file, conditions)
                     st.success(f"Condition '{node_name}' added successfully!")
 
     with tab2:
@@ -158,5 +165,5 @@ def manage_conditions():
                         condition['true_branch'] = true_branch
                         condition['false_branch'] = false_branch
 
-                        save_conditions(CONDITIONS_FILE, conditions)
+                        save_conditions(conditions_file, conditions)
                         st.success(f"Condition '{node_name}' updated successfully!")

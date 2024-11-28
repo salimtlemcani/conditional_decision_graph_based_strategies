@@ -1,0 +1,32 @@
+[
+    {
+        "node_name": "node1",
+        "indicator": "RSI",
+        "etf": "QQQ UP EQUITY",
+        "window": 30,
+        "operator": ">",
+        "threshold": 59.97,
+        "true_branch": "node2",
+        "false_branch": "node3"
+    },
+    {
+        "node_name": "node2",
+        "indicator": "Volatility",
+        "etf": "TQQQ UP EQUITY",
+        "window": 30,
+        "operator": ">",
+        "threshold": 69.98,
+        "true_branch": "action1",
+        "false_branch": "action2"
+    },
+    {
+        "node_name": "node3",
+        "indicator": "Volatility",
+        "etf": "SPY UP EQUITY",
+        "window": 20,
+        "operator": "<",
+        "threshold": 0.2,
+        "true_branch": "action2",
+        "false_branch": "action3"
+    }
+]

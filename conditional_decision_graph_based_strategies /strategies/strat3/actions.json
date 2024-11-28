@@ -1,0 +1,17 @@
+{
+    "action1": {
+        "SPY UP EQUITY": 0.5,
+        "TLT US EQUITY": 0.5
+    },
+    "action2": {
+        "BIL US EQUITY": 0.5,
+        "GLD US EQUITY": 0.5
+    },
+    "test n'import quoi": {
+        "abc": 0.5
+    },
+    "action3": {
+        "SPY UP EQUITY": 0.5,
+        "TLT US EQUITY": 0.5
+    }
+}

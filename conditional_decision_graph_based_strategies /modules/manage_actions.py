@@ -1,13 +1,17 @@
 
 import streamlit as st
+import os
+
 from utils.data_utils import load_actions, save_actions
 
-def manage_actions():
-    # File paths
-    ACTIONS_FILE = 'actions.json'
 
-    st.header("Manage Actions")
-    actions = load_actions(ACTIONS_FILE)
+def manage_actions(strategy_name):
+    STRATEGY_DIR = 'strategies'
+
+    strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+    actions_file = os.path.join(strategy_folder, 'actions.json')
+
+    actions = load_actions(actions_file)
 
     # Tabs for Adding and Editing Actions
     tab1, tab2 = st.tabs(["Add New Action", "Edit Existing Actions"])
@@ -46,7 +50,7 @@ def manage_actions():
                         if abs(sum(allocations_vals) - 1.0) > 1e-6:
                             st.warning("Allocations do not sum to 1.0. Please adjust accordingly.")
                         actions[action_name] = allocations
-                        save_actions(ACTIONS_FILE, actions)
+                        save_actions(actions_file, actions)
                         st.success(f"Action '{action_name}' saved successfully!")
 
     with tab2:
@@ -86,5 +90,5 @@ def manage_actions():
                         if abs(sum(allocations_vals) - 1.0) > 1e-6:
                             st.warning("Allocations do not sum to 1.0. Please adjust accordingly.")
                         actions[selected_action] = allocations
-                        save_actions(ACTIONS_FILE, actions)
+                        save_actions(actions_file, actions)
                         st.success(f"Action '{selected_action}' updated successfully!")

@@ -5,6 +5,8 @@ import logging
 import pandas as pd
 import json
 
+import sigtech.framework as sig
+
 
 def basket_creation_method(strategy, dt, positions, **additional_parameters):
     size_date = pd.Timestamp(strategy.size_date_from_decision_dt(dt))
@@ -64,3 +66,54 @@ def basket_creation_method(strategy, dt, positions, **additional_parameters):
     except Exception as e:
         logging.error(f"Error during order allocation: {e}")
         return {}
+
+
+def run_strategy(start_date, end_date, initial_cash, conditions_file, actions_file):
+    print('\n')
+    print('*'*30)
+    print('\n')
+
+    print(f'DEBUG [run_strategy] start_date {start_date}, end_date {end_date}, initial_cash {initial_cash}, conditions_file {conditions_file}, actions_file {actions_file}')
+    # Initialize SigTech environment
+    sig.init()
+
+    # Define ETFs
+    etf_names = [
+        'TLT US EQUITY',
+        'TQQQ US EQUITY',
+        'SVXY US EQUITY',
+        'VIXY US EQUITY',
+        'QQQ UP EQUITY',
+        'SPY UP EQUITY',
+        'BND UP EQUITY',
+        'BIL UP EQUITY',
+        'GLD UP EQUITY',
+    ]
+    etfs = {name: sig.obj.get(name) for name in etf_names}
+    print(f'DEBUG [run_strategy] etfs: {etfs}')
+    # Retrieve ETF histories
+    etf_histories = {name: etfs[name].history() for name in etf_names}
+
+    # Prepare additional parameters
+    additional_parameters = {
+        'example_dates': etf_histories[next(iter(etf_histories))].index.tolist(),
+        'etf_histories': etf_histories,
+        'etfs': etfs,
+        'conditions_file': conditions_file,
+        'actions_file': actions_file,
+    }
+
+    # Initialize the Dynamic Strategy
+    sig_strategy_object = sig.DynamicStrategy(
+        currency='USD',
+        start_date=start_date,
+        end_date=end_date,
+        trade_frequency='1BD',
+        basket_creation_method=basket_creation_method,
+        basket_creation_kwargs=additional_parameters,
+        initial_cash=initial_cash,
+    )
+
+    # Build the strategy
+    sig_strategy_object.build(progress=True)
+    return sig_strategy_object
