@@ -3,3 +3,6 @@ conditional_decision_graph_based_strategies /.ipynb_checkpoints/
 __pycache__/
 *.py[cod]
 .idea/
+.DS_Store
+conditional_decision_graph_based_strategies /.DS_Store
+conditional_decision_graph_based_strategies /strategies/.DS_Store

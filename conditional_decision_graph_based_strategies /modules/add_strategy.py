@@ -3,6 +3,11 @@ import os
 
 # Directory to store strategy objects
 STRATEGY_DIR = 'strategies'
+DEBUG = False
+
+# Initialize session state variables if not already done
+if 'success_message' not in st.session_state:
+    st.session_state['success_message'] = None
 
 
 def add_strategy():
@@ -33,7 +38,13 @@ def add_strategy():
             os.makedirs(strategy_folder)
             st.session_state['selected_strategy_name'] = strategy_name
             st.session_state['app_mode'] = 'Manage Conditions'  # Navigate to desired page
-            print("DEBUG [add_strategy] rerunning the app")
+            if DEBUG: print("DEBUG [add_strategy] rerunning the app")
+            st.session_state['success_message'] = f'Strategy "{strategy_name}" has been created successfully.'
             st.rerun()  # Trigger a rerun to refresh the app
         except Exception as e:
             st.error(f"An error occurred while creating the strategy folder: {e}")
+
+    # Display success message if it exists in the session state
+    if st.session_state.get('success_message'):
+        st.success(st.session_state['success_message'])
+        st.session_state['success_message'] = None  # Clear the message after displaying
