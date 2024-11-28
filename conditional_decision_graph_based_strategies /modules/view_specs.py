@@ -1,24 +1,24 @@
+import streamlit as st
 import base64
 import json
-import streamlit as st
+import os
 
 from utils.data_utils import load_conditions, load_actions
 
-
-# File paths
-CONDITIONS_FILE = 'conditions.json'
-ACTIONS_FILE = 'actions.json'
 
 # Directory to store strategy objects
 STRATEGY_DIR = 'strategies'
 
 
-def view_specs():
+def view_specs(strategy_name):
     st.header("View Specifications")
 
-    # Load specifications
-    conditions = load_conditions(CONDITIONS_FILE)
-    actions = load_actions(ACTIONS_FILE)
+    strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+    conditions_file = os.path.join(strategy_folder, 'conditions.json')
+    actions_file = os.path.join(strategy_folder, 'actions.json')
+
+    conditions = load_conditions(conditions_file)
+    actions = load_actions(actions_file)
 
     # Display Conditions
     st.subheader("Conditions")

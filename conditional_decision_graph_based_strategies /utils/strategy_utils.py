@@ -13,10 +13,13 @@ def save_strategy(strategy_object, strategy_name):
 
 def load_strategy(strategy_name):
     strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
+    print('DEBUG [load_strategy] strategy_folder:', strategy_folder)
     if not os.path.exists(strategy_folder):
+        print("DEBUG [load_strategy] strategy_folder not found")
         return None  # Folder does not exist
     strategy_file = os.path.join(strategy_folder, 'strategy.pkl')
     if not os.path.exists(strategy_file):
+        print("DEBUG [load_strategy] strategy_file not found")
         return None  # File does not exist
     with open(strategy_file, 'rb') as f:
         strategy_object = pickle.load(f)

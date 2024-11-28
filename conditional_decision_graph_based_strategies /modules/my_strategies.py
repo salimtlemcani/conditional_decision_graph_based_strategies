@@ -21,44 +21,86 @@ from utils.strategy_utils import list_saved_strategies, load_strategy
 STRATEGY_DIR = 'strategies'
 
 
+def select_strategy_name_selectbox(key: str = None):
+    # List all strategy folders
+    strategy_names = [name for name in os.listdir(STRATEGY_DIR) if os.path.isdir(os.path.join(STRATEGY_DIR, name))]
+
+    if not strategy_names:
+        st.info("No strategies have been saved yet.")
+        return
+
+    selected_strategy_name = st.selectbox("Select a Strategy", strategy_names, key=key)
+    return selected_strategy_name
+
+
 def my_strategies():
     st.header("My Strategies")
 
-    # Tabs for Running and Viewing Strategies
-    tab1, tab2 = st.tabs(["Run New Strategy", "View Saved Strategies"])
+    # # Manage active tab in session state
+    # if "my_strategies_active_tab" not in st.session_state:
+    #     st.session_state['my_strategies_active_tab'] = "Run New Strategy"  # Default tab
+    #
+    # # Tabs for Running and Viewing Strategies
+    # tab1, tab2 = st.tabs(["Run New Strategy", "View Saved Strategies"])
+    #
+    # with tab1:
+    #     if st.session_state['my_strategies_active_tab'] != "Run New Strategy":
+    #         st.session_state['my_strategies_active_tab'] = "Run New Strategy"
+    #     run_new_strategy()
+    #     st.write(st.session_state)
+    # with tab2:
+    #     if st.session_state['my_strategies_active_tab'] != "View Saved Strategies":
+    #         st.session_state['my_strategies_active_tab'] = "View Saved Strategies"
+    #     view_saved_strategies()
 
-    with tab1:
+    # Manage active tab in session state
+    if "active_tab" not in st.session_state:
+        st.session_state.active_tab = "Run New Strategy"  # Default tab
+
+    # Tab selection
+    tabs = ["Run New Strategy", "View Saved Strategies"]
+    active_tab = st.radio("Select a Tab", tabs, key="active_tab_selector")
+
+    # Update session state with the selected tab
+    st.session_state.active_tab = active_tab
+
+    # Render content based on active tab
+    if st.session_state.active_tab == "Run New Strategy":
         run_new_strategy()
-    with tab2:
+    elif st.session_state.active_tab == "View Saved Strategies":
         view_saved_strategies()
 
-
 def run_new_strategy():
+    # if st.session_state['my_strategies_active_tab'] != "Run New Strategy":
+    #     return
     st.subheader("Run New Strategy")
 
-    # Input fields for strategy parameters
+    selected_strategy_name = select_strategy_name_selectbox(key='run_strategy_selector')
+    if selected_strategy_name:
+        st.session_state['run_strategy_name'] = selected_strategy_name
+        print(f'DEBUG [view_saved_strategies]: {selected_strategy_name}')
+
     with st.form("strategy_params"):
-        strategy_name = st.text_input("Strategy Name", help="Provide a unique name for your strategy.")
         start_date = st.date_input("Start Date", value=dtm.date.today() - dtm.timedelta(days=365))
         end_date = st.date_input("End Date", value=dtm.date.today())
         initial_cash = st.number_input("Initial Cash", min_value=1000, step=100, value=100000)
 
         submitted = st.form_submit_button("Run Strategy")
         print('DEBUG [run_new_strategy]', {
-            "Strategy Name": strategy_name,
+            "Strategy Name": selected_strategy_name,
             "Start Date": start_date,
             "End Date": end_date,
             "Initial Cash": initial_cash,
             "Submitted": submitted
         })
     if submitted:
-        if not strategy_name:
+        if not selected_strategy_name:
             st.error("Strategy name cannot be empty.")
             return
 
         # Check if strategy with the same name exists
-        strategy_folder = os.path.join(STRATEGY_DIR, strategy_name)
-        print(f'DEBUG [run_new_strategy] strategy_folder: {strategy_folder}')
+        # Define the strategy folder path
+        strategy_folder = os.path.join(STRATEGY_DIR, selected_strategy_name)
         if not os.path.exists(strategy_folder):
             st.error("Strategy name does not exists. Please make sure to add your strategy before running it.")
             return
@@ -102,13 +144,13 @@ def run_new_strategy():
                 # Get performance data
                 performance = sig_strategy_object.history()
                 # Reset the Series name to a simple string
-                performance.name = f'{strategy_name} NAV'
+                performance.name = f'{selected_strategy_name} NAV'
                 # Convert to DataFrame
                 performance = performance.to_frame()
 
                 # Create a strategy object to save
                 strategy_object = {
-                    'name': strategy_name,
+                    'name': selected_strategy_name,
                     'start_date': start_date,
                     'end_date': end_date,
                     'initial_cash': initial_cash,
@@ -119,38 +161,37 @@ def run_new_strategy():
                 print('*' * 50)
                 print(f'DEBUG [run_new_strategy] new strategy object : {strategy_object}')
                 # Save the strategy object in the strategy folder
-                print(f'DEBUG [run_new_strategy] Updating strategy {strategy_name}')
+                print(f'DEBUG [run_new_strategy] Updating strategy {selected_strategy_name}')
                 strategy_file = os.path.join(strategy_folder, 'strategy.pkl')
                 with open(strategy_file, 'wb') as f:
                     pickle.dump(strategy_object, f)
                 print(f'DEBUG [run_new_strategy] strategy saved to {strategy_file}')
                 print('*'*50)
                 print(f'DEBUG [run_new_strategy] new strategy object : {strategy_object}')
-                st.success(f"Strategy '{strategy_name}' has been saved.")
+                st.success(f"Strategy '{selected_strategy_name}' has been saved.")
 
             except Exception as e:
                 st.error(f"An error occurred while running the strategy: {e}")
 
 
 def view_saved_strategies():
+    # if st.session_state['my_strategies_active_tab'] != "View Saved Strategies":
+    #     return
+
+    print('DEBUG [view_saved_strategies]')
     st.subheader("Saved Strategies")
 
-    # List all strategy folders
-    strategy_names = [name for name in os.listdir(STRATEGY_DIR)
-                      if os.path.isdir(os.path.join(STRATEGY_DIR, name))]
-    print(f'DEBUG [view_saved_strategies] strategy_names: {strategy_names}')
+    selected_strategy_name = st.session_state.get('view_strategy_name')
+    if not selected_strategy_name:
+        selected_strategy_name = select_strategy_name_selectbox(key='view_saved_strategies_selector')
 
-    if not strategy_names:
-        st.info("No strategies have been saved yet.")
-        return
-
-    selected_strategy_name = st.selectbox("Select a Strategy", strategy_names)
-    print(f'DEBUG [view_saved_strategies] selected_strategy_name: {selected_strategy_name}')
     if selected_strategy_name:
+        st.session_state['view_strategy_name'] = selected_strategy_name
         # Define the strategy folder path
         strategy_folder = os.path.join(STRATEGY_DIR, selected_strategy_name)
 
         # Load the strategy object
+        print('DEBUG [view_saved_strategies] loading strategy object')
         strategy_object = load_strategy(selected_strategy_name)
         print(f'DEBUG [view_saved_strategies] strategy_object: {strategy_object}')
         if strategy_object is None:
